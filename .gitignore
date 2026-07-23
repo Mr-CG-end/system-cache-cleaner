@@ -1,0 +1,31 @@
+# Visual Studio / .NET build output
+.vs/
+**/bin/
+**/obj/
+TestResults/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+# Test and coverage output
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+
+# Local release packages
+artifacts/release/
+*.zip
+
+# Local agent configuration
+.agents/
+.codex/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
