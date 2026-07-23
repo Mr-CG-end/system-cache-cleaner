@@ -65,7 +65,7 @@
                     <TextBlock x:Name="TxtExpectedSpace" Text="0 B" FontSize="18" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Right" />
                 </Grid>
 
-                <TextBlock Text="💡 提示：只读、无权限或被其他进程排他性占用的文件将被自动安全跳过。" 
+                <TextBlock Text="💡 提示：只读、无权限或被其他进程占用的文件不会被强制处理，并会记录在清理报告中。"
                            FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
             </StackPanel>
         </Border>

@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SystemCacheCleaner.Infrastructure;
 using SystemCacheCleaner.Models;
@@ -147,6 +148,27 @@ public class LifecycleStabilityTests
         await secondCleanTask;
     }
 
+    [TestMethod]
+    public async Task CleanupServiceException_RecoversCommandState_AC_M07_05()
+    {
+        CacheCategoryDefinition category = CreateCategory();
+        CategoryScanResult categoryResult = CreateCategoryResult(category);
+        ScanSessionResult scanResult = new ScanSessionResult(
+            DateTime.Now, DateTime.Now, new[] { categoryResult }, false, "完成");
+        MainViewModel vm = new MainViewModel(
+            scanService: new FakeCacheScanService(scanResult),
+            cleanupService: new ThrowingCleanupService());
+        await ((AsyncRelayCommand)vm.StartScanCommand).ExecuteAsync(null);
+        vm.SetConfirmDialogHandler((_, _, _) => true);
+
+        await ((AsyncRelayCommand)vm.CleanCommand).ExecuteAsync(null);
+
+        Assert.AreEqual(OperationStatus.PartialCompleted, vm.Status);
+        StringAssert.Contains(vm.StatusDescription, "模拟清理服务异常");
+        Assert.IsTrue(vm.RescanCommand.CanExecute(null));
+        Assert.IsFalse(vm.CleanCommand.CanExecute(null));
+    }
+
     private static CacheCategoryDefinition CreateCategory()
     {
         return new CacheCategoryDefinition(
@@ -240,5 +262,16 @@ public class SequencedCleanupService : ICleanupService
         CancellationToken cancellationToken = default)
     {
         return _results.Dequeue();
+    }
+}
+
+public class ThrowingCleanupService : ICleanupService
+{
+    public Task<CleanupSessionResult> CleanupAsync(
+        IReadOnlyList<CategoryScanResult> selectedCategoryResults,
+        IProgress<CleanupProgressReport>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        throw new IOException("模拟清理服务异常");
     }
 }

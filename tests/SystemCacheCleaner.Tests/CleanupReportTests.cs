@@ -87,4 +87,45 @@ public class CleanupReportTests
         // 期待: 重新触发了扫描，最终状态回到 ScanCompleted 且刷新了结果
         Assert.AreEqual(OperationStatus.ScanCompleted, vm.Status);
     }
+
+    [TestMethod]
+    public async Task Cleanup_RefreshesSystemDiskInfo_AC_M06_04()
+    {
+        CacheCategoryDefinition category = new CacheCategoryDefinition(
+            "user-temp", "用户临时文件", "说明", new[] { @"C:\Temp" }, true, "低");
+        CategoryScanResult categoryResult = new CategoryScanResult(
+            category, Array.Empty<CacheFileItem>(), 1, 1, true, "完成");
+        ScanSessionResult scanResult = new ScanSessionResult(
+            DateTime.Now, DateTime.Now, new[] { categoryResult }, false, "完成");
+        CleanupSessionResult cleanupResult = new CleanupSessionResult(
+            DateTime.Now, DateTime.Now, 1, 0, 0, 1,
+            Array.Empty<CleanupFileResult>(), false);
+        CountingDiskSpaceService diskService = new CountingDiskSpaceService();
+        MainViewModel vm = new MainViewModel(
+            diskSpaceService: diskService,
+            scanService: new FakeCacheScanService(scanResult),
+            cleanupService: new FakeCleanupService(cleanupResult));
+        await ((AsyncRelayCommand)vm.StartScanCommand).ExecuteAsync(null);
+        vm.SetConfirmDialogHandler((_, _, _) => true);
+        vm.SetReportDialogHandler(_ => false);
+
+        await ((AsyncRelayCommand)vm.CleanCommand).ExecuteAsync(null);
+
+        Assert.AreEqual(2, diskService.CallCount);
+        Assert.AreEqual(80, vm.SystemDiskInfo?.FreeBytes);
+    }
+}
+
+public class CountingDiskSpaceService : IDiskSpaceService
+{
+    public int CallCount { get; private set; }
+
+    public SystemDiskInfo GetSystemDiskInfo()
+    {
+        CallCount++;
+        long freeBytes = CallCount == 1 ? 40 : 80;
+        return new SystemDiskInfo(
+            "C:", 100, freeBytes, 100 - freeBytes,
+            100 - freeBytes, true, "正常");
+    }
 }
