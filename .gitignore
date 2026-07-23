@@ -14,6 +14,8 @@ TestResults/
 *.coverage
 *.coveragexml
 coverage/
+tmp/
+~$*.docx
 
 # Local release packages
 artifacts/release/
@@ -28,4 +30,3 @@ artifacts/release/
 Thumbs.db
 .idea/
 .vscode/
-
